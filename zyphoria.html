@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZYPHORIA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--black:#060608;--deep:#0a0a0f;--surface:#111118;--warm:#1a1a22;
+--gold:#c8a96e;--silver:#a0a8b8;--chrome:#d4dae8;--dim:#3a3d4a;
+--text:#e8eaf0;--muted:#6b6f80;--accent:#c8a96e;
+}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{background:var(--black);color:var(--text);font-family:'Syne',sans-serif;cursor:none;overflow-x:hidden}
+
+/* CUSTOM CURSOR */
+#cursor{position:fixed;width:10px;height:10px;background:var(--gold);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:transform 0.1s,background 0.3s;mix-blend-mode:difference}
+#cursor-trail{position:fixed;width:36px;height:36px;border:1px solid rgba(200,169,110,0.4);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:all 0.18s ease;mix-blend-mode:difference}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:2rem 4rem;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(to bottom,rgba(6,6,8,0.95),transparent)}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:0.15em;color:var(--chrome);text-decoration:none}
+.nav-links{display:flex;gap:3rem;list-style:none}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;transition:color 0.3s;font-weight:500}
+.nav-links a:hover{color:var(--gold)}
+.nav-cta{border:1px solid rgba(200,169,110,0.4);padding:0.6rem 1.8rem;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);text-decoration:none;transition:all 0.3s;font-weight:500}
+.nav-cta:hover{background:var(--gold);color:var(--black)}
+
+/* HERO */
+#hero{position:relative;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:0 6rem;overflow:hidden}
+.hero-bg{position:absolute;inset:0;z-index:0}
+.hero-grain{position:absolute;inset:0;opacity:0.06;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");z-index:2;pointer-events:none}
+#hero-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+.hero-content{position:relative;z-index:10}
+.hero-eyebrow{font-size:0.68rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--gold);margin-bottom:2.5rem;opacity:0;animation:fadeUp 1s 0.5s forwards}
+.hero-headline{font-family:'Bebas Neue',sans-serif;font-size:clamp(5rem,11vw,12rem);line-height:0.9;letter-spacing:0.02em;color:var(--chrome);margin-bottom:1rem;overflow:hidden}
+.hero-headline span{display:block;opacity:0;transform:translateY(80px);animation:slideUp 1.1s cubic-bezier(0.16,1,0.3,1) forwards}
+.hero-headline span:nth-child(1){animation-delay:0.7s}
+.hero-headline span:nth-child(2){animation-delay:0.9s;color:var(--gold)}
+.hero-headline span:nth-child(3){animation-delay:1.1s}
+.hero-sub{font-size:1.05rem;color:var(--muted);max-width:480px;line-height:1.8;margin-bottom:3.5rem;font-weight:400;opacity:0;animation:fadeUp 1s 1.4s forwards}
+.hero-actions{display:flex;gap:1.5rem;align-items:center;opacity:0;animation:fadeUp 1s 1.6s forwards}
+.btn-primary{background:var(--gold);color:var(--black);padding:1rem 2.8rem;font-size:0.78rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:600;text-decoration:none;transition:all 0.3s;font-family:'Syne',sans-serif}
+.btn-primary:hover{background:var(--chrome);transform:translateY(-2px)}
+.btn-ghost{color:var(--chrome);font-size:0.78rem;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;display:flex;align-items:center;gap:0.8rem;transition:color 0.3s}
+.btn-ghost:hover{color:var(--gold)}
+.scroll-indicator{position:absolute;bottom:3rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:0.8rem;z-index:10;opacity:0;animation:fadeUp 1s 2.2s forwards}
+.scroll-line{width:1px;height:60px;background:linear-gradient(to bottom,var(--gold),transparent);animation:scrollPulse 2s ease-in-out infinite}
+.scroll-text{font-size:0.6rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--muted)}
+.hero-stat{position:absolute;right:6rem;bottom:12rem;z-index:10;text-align:right;opacity:0;animation:fadeUp 1s 1.8s forwards}
+.hero-stat-num{font-family:'Bebas Neue',sans-serif;font-size:4rem;color:transparent;-webkit-text-stroke:1px var(--dim);line-height:1}
+.hero-stat-label{font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted)}
+
+/* AURA SECTION */
+#aura{padding:10rem 6rem;position:relative;overflow:hidden}
+.section-label{font-size:0.65rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--gold);margin-bottom:4rem;display:flex;align-items:center;gap:1.5rem}
+.section-label::before{content:'';width:40px;height:1px;background:var(--gold)}
+.aura-grid{display:grid;grid-template-columns:1fr 1fr;gap:8rem;align-items:center;margin-top:4rem}
+.aura-text h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,5vw,6rem);line-height:0.95;color:var(--chrome);margin-bottom:2rem}
+.aura-text h2 em{color:var(--gold);font-style:normal}
+.aura-text p{color:var(--muted);line-height:1.9;font-size:0.95rem;font-weight:400;margin-bottom:1.5rem}
+#aura-display{background:var(--surface);border:1px solid var(--dim);padding:3rem;min-height:400px;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden;transition:border-color 0.5s}
+#aura-display::before{content:'';position:absolute;inset:0;opacity:0.04;background:radial-gradient(circle at 50% 50%,var(--gold),transparent 70%);transition:opacity 0.5s}
+.aura-state-label{font-size:0.6rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--muted);margin-bottom:1.5rem}
+.aura-name{font-family:'Bebas Neue',sans-serif;font-size:3.5rem;line-height:1;color:var(--chrome);transition:all 0.6s;margin-bottom:1.5rem}
+.aura-desc{font-size:0.85rem;color:var(--muted);line-height:1.8;max-width:320px;transition:all 0.6s}
+.aura-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;margin-top:2rem;padding-top:2rem;border-top:1px solid var(--dim)}
+.aura-metric{text-align:center}
+.aura-metric-val{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--gold);display:block}
+.aura-metric-label{font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted)}
+.aura-canvas-wrap{position:absolute;inset:0;opacity:0.35;pointer-events:none}
+#aura-canvas{width:100%;height:100%}
+.aura-states-list{display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:2rem}
+.aura-tag{font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.5rem 1rem;border:1px solid var(--dim);color:var(--muted);cursor:pointer;transition:all 0.3s}
+.aura-tag:hover,.aura-tag.active{border-color:var(--gold);color:var(--gold)}
+
+/* NOISE MAP */
+#noisemap{padding:10rem 6rem;position:relative;background:var(--deep)}
+.noisemap-header{display:grid;grid-template-columns:1fr 1fr;gap:6rem;align-items:end;margin-bottom:6rem}
+.noisemap-header h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,6vw,7rem);line-height:0.92;color:var(--chrome)}
+.noisemap-header p{color:var(--muted);line-height:1.9;font-size:0.95rem;align-self:end;padding-bottom:0.5rem}
+#map-canvas-wrap{width:100%;height:600px;position:relative;border:1px solid var(--dim);overflow:hidden;background:rgba(10,10,15,0.8)}
+#map-canvas{width:100%;height:100%}
+.map-overlay{position:absolute;top:2rem;left:2rem;right:2rem;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;z-index:10}
+.map-legend{display:flex;gap:2rem}
+.legend-item{display:flex;align-items:center;gap:0.6rem;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted)}
+.legend-dot{width:8px;height:8px;border-radius:50%}
+.map-insight{background:rgba(10,10,15,0.9);border:1px solid var(--dim);padding:1.5rem 2rem;max-width:280px;opacity:0;transition:opacity 0.4s;pointer-events:all}
+.map-insight.visible{opacity:1}
+.map-insight-label{font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:0.5rem}
+.map-insight-text{font-size:0.8rem;color:var(--text);line-height:1.7}
+.map-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:3rem;border:1px solid var(--dim)}
+.map-stat{padding:2.5rem;border-right:1px solid var(--dim);text-align:center}
+.map-stat:last-child{border-right:none}
+.map-stat-num{font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--chrome);display:block;line-height:1}
+.map-stat-label{font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.5rem;display:block}
+
+/* WORK */
+#work{padding:10rem 6rem;position:relative}
+.work-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6rem}
+.work-header h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,5vw,5.5rem);line-height:1;color:var(--chrome)}
+.work-count{font-family:'Bebas Neue',sans-serif;font-size:6rem;color:transparent;-webkit-text-stroke:1px var(--dim)}
+.work-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.work-item{position:relative;background:var(--surface);overflow:hidden;cursor:none}
+.work-item-inner{padding:4rem;height:380px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;z-index:2;transition:all 0.5s}
+.work-item-bg{position:absolute;inset:0;z-index:1;opacity:0.1;transition:opacity 0.5s;transform:scale(1.05)}
+.work-item:hover .work-item-bg{opacity:0.25}
+.work-item:hover .work-item-inner{background:linear-gradient(to top,rgba(6,6,8,0.9),transparent)}
+.work-num{font-family:'Bebas Neue',sans-serif;font-size:5rem;color:transparent;-webkit-text-stroke:1px var(--dim);position:absolute;top:2rem;right:2rem;z-index:2;transition:color 0.3s,-webkit-text-stroke 0.3s}
+.work-item:hover .work-num{color:var(--gold);-webkit-text-stroke:1px var(--gold)}
+.work-cat{font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:1rem}
+.work-title{font-family:'DM Serif Display',serif;font-size:2rem;color:var(--chrome);line-height:1.2;margin-bottom:0.8rem}
+.work-desc{font-size:0.8rem;color:var(--muted);line-height:1.7;max-width:300px}
+.work-arrow{position:absolute;bottom:2.5rem;right:2.5rem;width:48px;height:48px;border:1px solid var(--dim);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:1.2rem;transition:all 0.3s;z-index:2}
+.work-item:hover .work-arrow{border-color:var(--gold);color:var(--gold);transform:rotate(-45deg)}
+.work-item-wide{grid-column:span 2}
+.work-item-wide .work-item-inner{height:280px;flex-direction:row;align-items:flex-end;gap:6rem}
+.work-item-wide .work-desc{max-width:400px}
+
+/* MANIFESTO */
+#manifesto{padding:12rem 6rem;background:var(--warm);position:relative;overflow:hidden}
+.manifesto-bg{position:absolute;top:-20%;right:-10%;font-family:'Bebas Neue',sans-serif;font-size:20vw;color:transparent;-webkit-text-stroke:1px rgba(200,169,110,0.06);line-height:1;pointer-events:none;z-index:0;white-space:nowrap}
+.manifesto-inner{position:relative;z-index:1;max-width:900px;margin:0 auto}
+.manifesto-inner .section-label{justify-content:center;margin-bottom:5rem}
+.manifesto-inner .section-label::before{display:none}
+.manifesto-pull{font-family:'DM Serif Display',serif;font-size:clamp(2rem,4vw,4.5rem);line-height:1.25;color:var(--chrome);text-align:center;margin-bottom:5rem}
+.manifesto-pull em{color:var(--gold);font-style:italic}
+.manifesto-body{columns:2;column-gap:5rem;font-size:0.92rem;color:var(--muted);line-height:2;font-weight:400}
+.manifesto-body p{margin-bottom:1.5rem;break-inside:avoid}
+.manifesto-body strong{color:var(--chrome);font-weight:500}
+.manifesto-line{width:60px;height:1px;background:var(--gold);margin:5rem auto}
+
+/* PROCESS */
+#process{padding:10rem 6rem;position:relative}
+.process-header{margin-bottom:6rem}
+.process-header h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,5vw,5.5rem);line-height:1;color:var(--chrome)}
+.process-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--dim)}
+.process-step{padding:3.5rem 2.5rem;border-right:1px solid var(--dim);position:relative;transition:background 0.4s}
+.process-step:last-child{border-right:none}
+.process-step:hover{background:var(--surface)}
+.process-step-num{font-family:'Bebas Neue',sans-serif;font-size:4rem;color:transparent;-webkit-text-stroke:1px var(--dim);line-height:1;margin-bottom:2rem;transition:color 0.3s,-webkit-text-stroke 0.3s}
+.process-step:hover .process-step-num{-webkit-text-stroke:1px var(--gold)}
+.process-step h3{font-size:1rem;font-weight:600;color:var(--chrome);margin-bottom:1rem;letter-spacing:0.05em}
+.process-step p{font-size:0.82rem;color:var(--muted);line-height:1.8}
+.process-step-icon{width:40px;height:40px;border:1px solid var(--dim);display:flex;align-items:center;justify-content:center;margin-bottom:2rem;color:var(--gold);font-size:1rem;transition:border-color 0.3s}
+.process-step:hover .process-step-icon{border-color:var(--gold)}
+
+/* CTA */
+#cta{padding:12rem 6rem;text-align:center;position:relative;overflow:hidden;background:var(--deep)}
+#cta-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:0.5}
+.cta-inner{position:relative;z-index:1}
+.cta-inner h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(4rem,9vw,10rem);line-height:0.92;color:var(--chrome);margin-bottom:3rem}
+.cta-inner h2 span{display:block;color:var(--gold)}
+.cta-inner p{font-size:1rem;color:var(--muted);max-width:500px;margin:0 auto 4rem;line-height:1.9}
+.cta-actions{display:flex;gap:1.5rem;justify-content:center;align-items:center}
+
+/* FOOTER */
+footer{padding:4rem 6rem;border-top:1px solid var(--dim);display:flex;justify-content:space-between;align-items:center}
+.footer-logo{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:0.15em;color:var(--muted)}
+.footer-links{display:flex;gap:2.5rem}
+.footer-links a{font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.3s}
+.footer-links a:hover{color:var(--gold)}
+.footer-copy{font-size:0.65rem;color:var(--dim);letter-spacing:0.1em}
+
+/* DIVIDER */
+.section-divider{width:100%;height:1px;background:var(--dim)}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(80px)}to{opacity:1;transform:translateY(0)}}
+@keyframes scrollPulse{0%,100%{opacity:0.3;transform:scaleY(0.5);transform-origin:top}50%{opacity:1;transform:scaleY(1)}}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(40px);transition:opacity 0.9s cubic-bezier(0.16,1,0.3,1),transform 0.9s cubic-bezier(0.16,1,0.3,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-delay-1{transition-delay:0.15s}
+.reveal-delay-2{transition-delay:0.3s}
+.reveal-delay-3{transition-delay:0.45s}
+
+/* AMBIENT GLOW */
+.glow-ambient{position:absolute;width:600px;height:600px;border-radius:50%;filter:blur(120px);pointer-events:none;opacity:0.06;background:var(--gold)}
+
+/* LOADING */
+#loader{position:fixed;inset:0;background:var(--black);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.8s 0.2s,visibility 0.8s 0.2s}
+#loader.done{opacity:0;visibility:hidden}
+.loader-logo{font-family:'Bebas Neue',sans-serif;font-size:4rem;letter-spacing:0.2em;color:var(--chrome);margin-bottom:2rem;animation:loaderPulse 1.5s ease-in-out infinite}
+.loader-bar-wrap{width:200px;height:1px;background:var(--dim);position:relative;overflow:hidden}
+.loader-bar{position:absolute;left:0;top:0;height:100%;background:var(--gold);animation:loaderBar 1.5s cubic-bezier(0.4,0,0.2,1) forwards}
+.loader-text{font-size:0.6rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--muted);margin-top:1.5rem;animation:loaderText 1.5s 0.5s ease forwards;opacity:0}
+@keyframes loaderPulse{0%,100%{opacity:0.6}50%{opacity:1}}
+@keyframes loaderBar{0%{width:0}100%{width:100%}}
+@keyframes loaderText{to{opacity:1}}
+
+/* INTERACTIVE HOVER */
+.magnetic{display:inline-block;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1)}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-logo">ZYPHORIA</div>
+  <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+  <div class="loader-text">Calibrating digital atmosphere</div>
+</div>
+
+<!-- CURSOR -->
+<div id="cursor"></div>
+<div id="cursor-trail"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">ZYPHORIA</a>
+  <ul class="nav-links">
+    <li><a href="#work">Work</a></li>
+    <li><a href="#aura">Digital Aura</a></li>
+    <li><a href="#noisemap">Noise Map</a></li>
+    <li><a href="#manifesto">Manifesto</a></li>
+  </ul>
+  <a href="#cta" class="nav-cta">Begin →</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg">
+    <canvas id="hero-canvas"></canvas>
+    <div class="hero-grain"></div>
+    <div class="glow-ambient" style="top:-10%;left:-5%;opacity:0.07"></div>
+    <div class="glow-ambient" style="bottom:-20%;right:-10%;opacity:0.04;background:var(--silver)"></div>
+  </div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">— Presence Engineering Studio</div>
+    <div class="hero-headline">
+      <span>ATTENTION</span>
+      <span>IS EARNED.</span>
+      <span>NOT GIVEN.</span>
+    </div>
+    <p class="hero-sub">Zyphoria engineers digital presence, emotional branding, and cinematic identity for brands that understand attention is the rarest currency of our era.</p>
+    <div class="hero-actions">
+      <a href="#work" class="btn-primary magnetic">Explore Our Work</a>
+      <a href="#aura" class="btn-ghost magnetic">Discover Your Aura <span>→</span></a>
+    </div>
+  </div>
+  <div class="hero-stat">
+    <div class="hero-stat-num">94%</div>
+    <div class="hero-stat-label">Audience Attention Lost<br>Within 3 Seconds</div>
+  </div>
+  <div class="scroll-indicator">
+    <div class="scroll-line"></div>
+    <div class="scroll-text">Scroll</div>
+  </div>
+</section>
+
+<!-- DIGITAL AURA -->
+<section id="aura">
+  <div class="glow-ambient" style="top:20%;left:-10%;opacity:0.05"></div>
+  <div class="section-label reveal">Digital Aura System</div>
+  <div class="aura-grid">
+    <div class="aura-text">
+      <h2 class="reveal">WE READ<br><em>YOUR</em><br>DIGITAL<br>ENERGY.</h2>
+      <p class="reveal reveal-delay-1">Every interaction you make carries a signature. Your scroll rhythm, your hesitation, your reading pace — they speak a language most can't hear. Zyphoria can.</p>
+      <p class="reveal reveal-delay-2">The Digital Aura system builds a live cinematic profile of how you engage with the world. It doesn't judge. It understands. And it adapts the experience around you.</p>
+      <div class="aura-states-list reveal reveal-delay-3">
+        <div class="aura-tag active" data-aura="0">Silent Observer</div>
+        <div class="aura-tag" data-aura="1">Visual Perfectionist</div>
+        <div class="aura-tag" data-aura="2">Chaos Navigator</div>
+        <div class="aura-tag" data-aura="3">Emotional Scroller</div>
+        <div class="aura-tag" data-aura="4">High-Intent Mind</div>
+        <div class="aura-tag" data-aura="5">Culture Hunter</div>
+        <div class="aura-tag" data-aura="6">Attention Drifter</div>
+      </div>
+    </div>
+    <div class="aura-display-wrap reveal reveal-delay-1">
+      <div id="aura-display">
+        <div class="aura-canvas-wrap"><canvas id="aura-canvas"></canvas></div>
+        <div class="aura-state-label">Current Aura State</div>
+        <div class="aura-name" id="aura-name">Silent Observer</div>
+        <div class="aura-desc" id="aura-desc">You move through spaces with quiet precision. You observe before you act. Depth over spectacle. You notice things others miss entirely.</div>
+        <div class="aura-metrics">
+          <div class="aura-metric"><span class="aura-metric-val" id="m1">12</span><span class="aura-metric-label">Scroll Depth</span></div>
+          <div class="aura-metric"><span class="aura-metric-val" id="m2">3.4s</span><span class="aura-metric-label">Read Pace</span></div>
+          <div class="aura-metric"><span class="aura-metric-val" id="m3">97</span><span class="aura-metric-label">Attention Score</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- NOISE MAP -->
+<section id="noisemap">
+  <div class="noisemap-header">
+    <h2 class="reveal">THE<br>INTERNET<br>NOISE<br>MAP.</h2>
+    <p class="reveal reveal-delay-1">This is what attention collapse looks like in real time. Every node is a signal. Every fading star is a brand that forgot emotion is the only algorithm that never changes.</p>
+  </div>
+  <div id="map-canvas-wrap">
+    <canvas id="map-canvas"></canvas>
+    <div class="map-overlay">
+      <div class="map-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#c8a96e"></div> High Engagement</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#6b7a8d"></div> Fading Presence</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#c84848"></div> Attention Collapse</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(255,255,255,0.2)"></div> Cultural Drift</div>
+      </div>
+      <div class="map-insight" id="map-insight">
+        <div class="map-insight-label">Signal Analysis</div>
+        <div class="map-insight-text" id="map-insight-text">Hover the constellation to read the noise signals.</div>
+      </div>
+    </div>
+  </div>
+  <div class="map-stats reveal">
+    <div class="map-stat"><span class="map-stat-num">94%</span><span class="map-stat-label">Brand signals ignored daily</span></div>
+    <div class="map-stat"><span class="map-stat-num">2.7s</span><span class="map-stat-label">Average attention span online</span></div>
+    <div class="map-stat"><span class="map-stat-num">11M</span><span class="map-stat-label">Content pieces published daily</span></div>
+    <div class="map-stat"><span class="map-stat-num">0.3%</span><span class="map-stat-label">Content that earns deep attention</span></div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- WORK -->
+<section id="work">
+  <div class="work-header reveal">
+    <div>
+      <h2>SELECTED<br>WORK</h2>
+    </div>
+    <div class="work-count">06</div>
+  </div>
+  <div class="work-grid">
+    <div class="work-item reveal">
+      <div class="work-item-bg" style="background:linear-gradient(135deg,#1a1208,#2a1f0a)"></div>
+      <div class="work-num">01</div>
+      <div class="work-item-inner">
+        <div class="work-cat">Brand Identity</div>
+        <div class="work-title">Aether Collective</div>
+        <div class="work-desc">Complete digital presence rebuild for a luxury architecture studio. Presence up 400% in 6 months.</div>
+      </div>
+      <div class="work-arrow">→</div>
+    </div>
+    <div class="work-item reveal reveal-delay-1">
+      <div class="work-item-bg" style="background:linear-gradient(135deg,#0a1218,#0a1a22)"></div>
+      <div class="work-num">02</div>
+      <div class="work-item-inner">
+        <div class="work-cat">Cinematic Identity</div>
+        <div class="work-title">Noir Films</div>
+        <div class="work-desc">Visual storytelling system for an independent cinema house across digital and physical space.</div>
+      </div>
+      <div class="work-arrow">→</div>
+    </div>
+    <div class="work-item work-item-wide reveal reveal-delay-1">
+      <div class="work-item-bg" style="background:linear-gradient(90deg,#120a18,#0a1218)"></div>
+      <div class="work-num">03</div>
+      <div class="work-item-inner">
+        <div>
+          <div class="work-cat">Cultural Campaign</div>
+          <div class="work-title">Reverie Fashion House</div>
+        </div>
+        <div class="work-desc">Seasonal campaign generating 12M impressions through emotionally-coded visual language. The audience didn't see an ad. They felt a moment.</div>
+      </div>
+      <div class="work-arrow">→</div>
+    </div>
+    <div class="work-item reveal">
+      <div class="work-item-bg" style="background:linear-gradient(135deg,#0f180a,#182310)"></div>
+      <div class="work-num">04</div>
+      <div class="work-item-inner">
+        <div class="work-cat">Digital Experience</div>
+        <div class="work-title">Obelisk Studio</div>
+        <div class="work-desc">Immersive product launch experience that converted visitors into advocates through environmental storytelling.</div>
+      </div>
+      <div class="work-arrow">→</div>
+    </div>
+    <div class="work-item reveal reveal-delay-1">
+      <div class="work-item-bg" style="background:linear-gradient(135deg,#1a0a0a,#220a0a)"></div>
+      <div class="work-num">05</div>
+      <div class="work-item-inner">
+        <div class="work-cat">Audience Systems</div>
+        <div class="work-title">Signal Media</div>
+        <div class="work-desc">Behavioral attention architecture for a streaming platform scaling from 200K to 2M users.</div>
+      </div>
+      <div class="work-arrow">→</div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- MANIFESTO -->
+<section id="manifesto">
+  <div class="manifesto-bg">ZYPHORIA</div>
+  <div class="manifesto-inner">
+    <div class="section-label reveal">Our Manifesto</div>
+    <div class="manifesto-pull reveal reveal-delay-1">
+      "The internet doesn't have<br>an attention problem.<br>It has an <em>emotion problem.</em>"
+    </div>
+    <div class="manifesto-line reveal"></div>
+    <div class="manifesto-body reveal reveal-delay-1">
+      <p>Brands disappear because they confuse presence with content. They publish without purpose. They design without meaning. They reach without touching. The noise grows louder and they grow quieter inside it.</p>
+      <p><strong>The attention economy was never about attention.</strong> It was always about trust. About the moment a stranger becomes a witness. About the emotional signature left after the screen goes dark.</p>
+      <p>We live in an era of radical overstimulation. Every surface competes. Every second fights the next. The brands that survive aren't louder — they are more precise. More emotionally aware. More human in their digital strategy.</p>
+      <p><strong>Zyphoria exists at this intersection.</strong> Between art and strategy. Between feeling and function. Between the cinematic and the commercial. We engineer the moment before memory. The impression before intention.</p>
+      <p>Our method is not a framework. It's a philosophy. We begin with emotion and work backwards to execution. We build presence systems that audiences feel before they understand. Identity that precedes explanation.</p>
+      <p><strong>The brands we build don't compete for attention.</strong> They command it. Because they have something algorithms cannot manufacture: a genuine human frequency. A recognizable emotional signature in a universe of noise.</p>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- PROCESS -->
+<section id="process">
+  <div class="process-header reveal">
+    <div class="section-label">How We Work</div>
+    <h2>THE ZYPHORIA<br>METHOD.</h2>
+  </div>
+  <div class="process-steps">
+    <div class="process-step reveal">
+      <div class="process-step-num">01</div>
+      <div class="process-step-icon">◈</div>
+      <h3>Signal Audit</h3>
+      <p>We decode your current emotional signal. What audiences feel before they think. Where presence fades. Where opportunity lives invisible.</p>
+    </div>
+    <div class="process-step reveal reveal-delay-1">
+      <div class="process-step-num">02</div>
+      <div class="process-step-icon">◎</div>
+      <h3>Identity Architecture</h3>
+      <p>We engineer your emotional blueprint. Visual language, cultural positioning, storytelling DNA. Everything that makes you unmistakably you.</p>
+    </div>
+    <div class="process-step reveal reveal-delay-2">
+      <div class="process-step-num">03</div>
+      <div class="process-step-icon">◉</div>
+      <h3>Presence System</h3>
+      <p>We build the cinematic infrastructure. Every touchpoint, every channel, every medium — orchestrated as a unified emotional experience.</p>
+    </div>
+    <div class="process-step reveal reveal-delay-3">
+      <div class="process-step-num">04</div>
+      <div class="process-step-icon">⟐</div>
+      <h3>Cultural Expansion</h3>
+      <p>We evolve the signal into culture. Your audience becomes your distribution. Your aesthetic becomes a movement. Attention becomes legacy.</p>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- CTA -->
+<section id="cta">
+  <canvas id="cta-canvas"></canvas>
+  <div class="cta-inner">
+    <div class="section-label" style="justify-content:center;margin-bottom:4rem"><span style="width:40px;height:1px;background:var(--gold);display:block"></span> Ready to Begin</div>
+    <h2 class="reveal">YOUR<br><span>PRESENCE</span><br>AWAITS.</h2>
+    <p class="reveal reveal-delay-1">Stop competing for attention. Start commanding it. Let's engineer a digital identity that the internet won't forget.</p>
+    <div class="cta-actions reveal reveal-delay-2">
+      <a href="#" class="btn-primary magnetic">Start a Project →</a>
+      <a href="#" class="btn-ghost magnetic">Schedule a Conversation</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">ZYPHORIA</div>
+  <div class="footer-links">
+    <a href="#">Work</a>
+    <a href="#">Process</a>
+    <a href="#">Manifesto</a>
+    <a href="#">Contact</a>
+  </div>
+  <div class="footer-copy">© 2025 Zyphoria Studio</div>
+</footer>
+
+<script>
+// LOADER
+setTimeout(()=>{document.getElementById('loader').classList.add('done')},1800);
+
+// CURSOR
+const cursor=document.getElementById('cursor');
+const trail=document.getElementById('cursor-trail');
+let mx=0,my=0,tx=0,ty=0;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX;my=e.clientY;
+  cursor.style.left=mx+'px';cursor.style.top=my+'px';
+});
+function animTrail(){
+  tx+=(mx-tx)*0.12;ty+=(my-ty)*0.12;
+  trail.style.left=tx+'px';trail.style.top=ty+'px';
+  requestAnimationFrame(animTrail);
+}
+animTrail();
+document.querySelectorAll('a,button,.aura-tag,.work-item').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cursor.style.transform='translate(-50%,-50%) scale(2.5)';trail.style.transform='translate(-50%,-50%) scale(0.5)'});
+  el.addEventListener('mouseleave',()=>{cursor.style.transform='translate(-50%,-50%) scale(1)';trail.style.transform='translate(-50%,-50%) scale(1)'});
+});
+
+// HERO CANVAS
+const hCanvas=document.getElementById('hero-canvas');
+const hCtx=hCanvas.getContext('2d');
+function resizeHero(){hCanvas.width=hCanvas.offsetWidth;hCanvas.height=hCanvas.offsetHeight}
+resizeHero();window.addEventListener('resize',resizeHero);
+class Particle{
+  constructor(){this.reset()}
+  reset(){
+    this.x=Math.random()*hCanvas.width;
+    this.y=Math.random()*hCanvas.height;
+    this.vx=(Math.random()-0.5)*0.3;
+    this.vy=(Math.random()-0.5)*0.3;
+    this.r=Math.random()*1.5+0.2;
+    this.alpha=Math.random()*0.5+0.1;
+    this.type=Math.random()>0.8?'gold':'silver';
+    this.pulse=Math.random()*Math.PI*2;
+  }
+  update(){
+    this.x+=this.vx;this.y+=this.vy;
+    this.pulse+=0.02;
+    if(this.x<0||this.x>hCanvas.width||this.y<0||this.y>hCanvas.height)this.reset();
+    const dx=mx-this.x,dy=my-this.y;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<120){const force=((120-dist)/120)*0.5;this.vx-=dx/dist*force*0.03;this.vy-=dy/dist*force*0.03}
+  }
+  draw(){
+    const a=this.alpha*(0.7+0.3*Math.sin(this.pulse));
+    hCtx.beginPath();
+    hCtx.arc(this.x,this.y,this.r,0,Math.PI*2);
+    hCtx.fillStyle=this.type==='gold'?`rgba(200,169,110,${a})`:`rgba(160,168,184,${a})`;
+    hCtx.fill();
+  }
+}
+const particles=Array.from({length:200},()=>new Particle());
+const lineParticles=particles.slice(0,60);
+function drawHero(){
+  hCtx.clearRect(0,0,hCanvas.width,hCanvas.height);
+  for(let i=0;i<lineParticles.length;i++){
+    for(let j=i+1;j<lineParticles.length;j++){
+      const dx=lineParticles[i].x-lineParticles[j].x;
+      const dy=lineParticles[i].y-lineParticles[j].y;
+      const d=Math.sqrt(dx*dx+dy*dy);
+      if(d<120){
+        hCtx.beginPath();
+        hCtx.moveTo(lineParticles[i].x,lineParticles[i].y);
+        hCtx.lineTo(lineParticles[j].x,lineParticles[j].y);
+        hCtx.strokeStyle=`rgba(200,169,110,${(1-d/120)*0.1})`;
+        hCtx.lineWidth=0.5;hCtx.stroke();
+      }
+    }
+  }
+  particles.forEach(p=>{p.update();p.draw()});
+  const grad=hCtx.createRadialGradient(mx,my,0,mx,my,200);
+  grad.addColorStop(0,'rgba(200,169,110,0.05)');
+  grad.addColorStop(1,'transparent');
+  hCtx.fillStyle=grad;
+  hCtx.fillRect(0,0,hCanvas.width,hCanvas.height);
+  requestAnimationFrame(drawHero);
+}
+drawHero();
+
+// AURA SYSTEM
+const auraData=[
+  {name:'Silent Observer',desc:'You move through spaces with quiet precision. You observe before you act. Depth over spectacle. You notice things others miss entirely.',m1:'12',m2:'3.4s',m3:'97',color:'#6b7a8d'},
+  {name:'Visual Perfectionist',desc:'Detail is your obsession. Every proportion matters. You return to things twice. Beauty is not decoration for you — it is language.',m1:'38',m2:'5.1s',m3:'89',color:'#c8a96e'},
+  {name:'Chaos Navigator',desc:'You thrive at velocity. Pattern recognition in noise. You see structure where others see randomness. You decide fast and move faster.',m1:'87',m2:'1.2s',m3:'64',color:'#c84848'},
+  {name:'Emotional Scroller',desc:'You scroll by feeling, not purpose. Something must resonate emotionally or you leave. When it does — you stay for a very long time.',m1:'24',m2:'4.8s',m3:'78',color:'#8d6ba0'},
+  {name:'High-Intent Mind',desc:'You came here to find something specific. Efficient. Purposeful. Your attention is a resource you guard carefully. You reward what earns it.',m1:'91',m2:'2.1s',m3:'95',color:'#c8a96e'},
+  {name:'Culture Hunter',desc:'You track the edges of what is forming. Before it becomes mainstream, you already know. Cultural instinct is your primary navigation system.',m1:'44',m2:'3.9s',m3:'83',color:'#6b8d7a'},
+  {name:'Attention Drifter',desc:'You are everywhere and nowhere. Multiple tabs. Multiple ideas. You catch signal in peripheral vision. Serendipitous discovery is your superpower.',m1:'6',m2:'2.7s',m3:'52',color:'#6b6b8d'}
+];
+const auraTags=document.querySelectorAll('.aura-tag');
+function setAura(i){
+  const d=auraData[i];
+  document.getElementById('aura-name').textContent=d.name;
+  document.getElementById('aura-desc').textContent=d.desc;
+  document.getElementById('m1').textContent=d.m1;
+  document.getElementById('m2').textContent=d.m2;
+  document.getElementById('m3').textContent=d.m3;
+  document.getElementById('aura-display').style.borderColor=d.color+'66';
+  auraTags.forEach((t,idx)=>t.classList.toggle('active',idx===i));
+  drawAuraCanvas(d.color);
+}
+auraTags.forEach((tag,i)=>tag.addEventListener('click',()=>setAura(i)));
+
+// AURA CANVAS
+const ac=document.getElementById('aura-canvas');
+const actx=ac.getContext('2d');
+let auraColor='#6b7a8d';
+function resizeAura(){ac.width=ac.offsetParent?ac.offsetParent.offsetWidth:400;ac.height=ac.offsetParent?ac.offsetParent.offsetHeight:400}
+setTimeout(resizeAura,100);
+function drawAuraCanvas(hexColor){
+  auraColor=hexColor||auraColor;
+  if(!ac.width)return;
+  actx.clearRect(0,0,ac.width,ac.height);
+  const cx=ac.width/2,cy=ac.height/2;
+  for(let r=20;r<Math.max(cx,cy)*1.4;r+=25){
+    actx.beginPath();actx.arc(cx,cy,r,0,Math.PI*2);
+    actx.strokeStyle=auraColor+'18';actx.lineWidth=0.5;actx.stroke();
+  }
+  const t=Date.now()*0.001;
+  for(let i=0;i<12;i++){
+    const a=t+i*(Math.PI*2/12);
+    const ro=80+30*Math.sin(i*0.7);
+    const x=cx+Math.cos(a)*ro,y=cy+Math.sin(a)*ro;
+    actx.beginPath();actx.arc(x,y,1.5,0,Math.PI*2);
+    actx.fillStyle=auraColor+'aa';actx.fill();
+  }
+  requestAnimationFrame(()=>drawAuraCanvas());
+}
+drawAuraCanvas('#6b7a8d');
+
+// NOISE MAP
+const mc=document.getElementById('map-canvas');
+const mctx=mc.getContext('2d');
+function resizeMap(){mc.width=mc.offsetParent?mc.offsetParent.offsetWidth:800;mc.height=mc.offsetParent?mc.offsetParent.offsetHeight:600}
+setTimeout(resizeMap,200);window.addEventListener('resize',resizeMap);
+
+const insights=[
+  "94% of brand signals dissolve within hours of publication.",
+  "High-emotion content retains attention 7x longer than informational content.",
+  "Cultural brands create self-sustaining attention ecosystems.",
+  "Generic aesthetics collapse audience trust in 2.1 seconds.",
+  "Presence without emotion is just noise with a logo.",
+  "The strongest brands occupy feelings, not feeds.",
+  "Attention decay begins the moment authenticity ends.",
+  "Surviving brands are remembered as feelings, not products."
+];
+
+class MapNode{
+  constructor(){this.reset()}
+  reset(){
+    this.x=Math.random()*(mc.width||800);
+    this.y=Math.random()*(mc.height||600);
+    this.r=Math.random()*4+1;this.baseR=this.r;
+    this.vx=(Math.random()-0.5)*0.4;this.vy=(Math.random()-0.5)*0.4;
+    this.alpha=Math.random()*0.8+0.2;
+    this.decayRate=Math.random()*0.001+0.0005;
+    this.type=Math.random()<0.15?'high':Math.random()<0.4?'fading':Math.random()<0.6?'collapse':'drift';
+    this.pulse=Math.random()*Math.PI*2;this.pulseSpeed=Math.random()*0.03+0.01;
+    this.life=1;this.insight=insights[Math.floor(Math.random()*insights.length)];
+  }
+  color(){
+    switch(this.type){
+      case'high':return`rgba(200,169,110,${this.alpha*this.life})`;
+      case'fading':return`rgba(107,122,141,${this.alpha*this.life})`;
+      case'collapse':return`rgba(200,72,72,${this.alpha*this.life})`;
+      default:return`rgba(255,255,255,${this.alpha*this.life*0.2})`;
+    }
+  }
+  update(){
+    this.x+=this.vx;this.y+=this.vy;this.pulse+=this.pulseSpeed;
+    if(this.type!=='high')this.life-=this.decayRate;
+    if(this.life<0||this.x<0||this.x>mc.width||this.y<0||this.y>mc.height)this.reset();
+  }
+  draw(){
+    const pr=this.baseR*(1+0.3*Math.sin(this.pulse));
+    if(this.type==='high'){
+      mctx.beginPath();mctx.arc(this.x,this.y,pr*3,0,Math.PI*2);
+      mctx.fillStyle=`rgba(200,169,110,0.05)`;mctx.fill();
+    }
+    mctx.beginPath();mctx.arc(this.x,this.y,pr,0,Math.PI*2);
+    mctx.fillStyle=this.color();mctx.fill();
+  }
+}
+const mapNodes=Array.from({length:180},()=>new MapNode());
+mc.addEventListener('mousemove',e=>{
+  const rect=mc.getBoundingClientRect();
+  const ex=e.clientX-rect.left,ey=e.clientY-rect.top;
+  let closest=null,minD=60;
+  mapNodes.forEach(n=>{const d=Math.hypot(n.x-ex,n.y-ey);if(d<minD){minD=d;closest=n}});
+  const ins=document.getElementById('map-insight');
+  const insTxt=document.getElementById('map-insight-text');
+  if(closest){ins.classList.add('visible');insTxt.textContent=closest.insight}
+  else ins.classList.remove('visible');
+});
+function drawMap(){
+  if(!mc.width){requestAnimationFrame(drawMap);return}
+  mctx.clearRect(0,0,mc.width,mc.height);
+  for(let i=0;i<mapNodes.length;i++){
+    for(let j=i+1;j<mapNodes.length;j++){
+      const d=Math.hypot(mapNodes[i].x-mapNodes[j].x,mapNodes[i].y-mapNodes[j].y);
+      if(d<80&&mapNodes[i].type!=='drift'){
+        mctx.beginPath();mctx.moveTo(mapNodes[i].x,mapNodes[i].y);mctx.lineTo(mapNodes[j].x,mapNodes[j].y);
+        mctx.strokeStyle=`rgba(200,169,110,${(1-d/80)*0.15*Math.min(mapNodes[i].life,mapNodes[j].life)})`;
+        mctx.lineWidth=0.5;mctx.stroke();
+      }
+    }
+  }
+  mapNodes.forEach(n=>{n.update();n.draw()});
+  requestAnimationFrame(drawMap);
+}
+drawMap();
+
+// CTA CANVAS
+const cc=document.getElementById('cta-canvas');
+const cctx=cc.getContext('2d');
+function resizeCta(){cc.width=cc.offsetParent?cc.offsetParent.offsetWidth:800;cc.height=cc.offsetParent?cc.offsetParent.offsetHeight:600}
+setTimeout(resizeCta,300);
+function drawCta(){
+  if(!cc.width){requestAnimationFrame(drawCta);return}
+  cctx.clearRect(0,0,cc.width,cc.height);
+  const cx=cc.width/2,cy=cc.height/2,t=Date.now()*0.0004;
+  for(let ring=0;ring<6;ring++){
+    cctx.beginPath();cctx.arc(cx,cy,80+ring*80+20*Math.sin(t+ring),0,Math.PI*2);
+    cctx.strokeStyle=`rgba(200,169,110,${0.04-ring*0.005})`;cctx.lineWidth=1;cctx.stroke();
+  }
+  requestAnimationFrame(drawCta);
+}
+drawCta();
+
+// REVEAL OBSERVER
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')});
+},{threshold:0.15});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+// MAGNETIC BUTTONS
+document.querySelectorAll('.magnetic').forEach(el=>{
+  el.addEventListener('mousemove',e=>{
+    const r=el.getBoundingClientRect();
+    el.style.transform=`translate(${(e.clientX-r.left-r.width/2)*0.25}px,${(e.clientY-r.top-r.height/2)*0.25}px)`;
+  });
+  el.addEventListener('mouseleave',()=>el.style.transform='');
+});
+
+// PARALLAX HERO
+window.addEventListener('scroll',()=>{
+  const y=window.scrollY;
+  const hc=document.querySelector('.hero-content');
+  if(hc&&y<window.innerHeight)hc.style.transform=`translateY(${y*0.3}px)`;
+  // Auto-aura from scroll behavior
+});
+
+let scrollEvents=0,lastScroll=0,fastScrolls=0,slowScrolls=0;
+window.addEventListener('scroll',()=>{
+  const now=Date.now(),diff=now-lastScroll;
+  scrollEvents++;
+  if(diff<200)fastScrolls++;else slowScrolls++;
+  lastScroll=now;
+  if(scrollEvents>10&&scrollEvents%15===0){
+    if(fastScrolls>slowScrolls)setAura(2);
+    else if(slowScrolls>fastScrolls*2)setAura(0);
+    else setAura(Math.floor(Math.random()*auraData.length));
+  }
+});
+</script>
+</body>
+</html>
